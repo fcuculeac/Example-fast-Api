@@ -4,10 +4,10 @@ from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 from starlette import status
 
-from app import schemas, models
+from app import schemas, models, oauth2
 from app.database import get_db
 
-router = APIRouter(prefix="/posts")
+router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
 @router.get("/", response_model=List[schemas.Post])
@@ -23,7 +23,12 @@ def get_posts(db: Session = Depends(get_db)):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_post(new_post: schemas.PostCreate, db: Session = Depends(get_db)):
+def create_post(new_post: schemas.PostCreate,
+                db: Session = Depends(get_db),
+                user_id: int = Depends(oauth2.get_current_user)):
+
+    print(f"User id: {user_id}")
+
     # print(f"payload = {new_post}")
     # print(f"payload as dict = {new_post.dict()}")
     # # return {"new_post": f"title={payload['title']}, content={payload['content']}"}
@@ -55,7 +60,8 @@ def create_post(new_post: schemas.PostCreate, db: Session = Depends(get_db)):
 
 # get post from an id
 @router.get("/{id}", response_model=schemas.Post)
-def get_post(id: int, db: Session = Depends(get_db)):
+def get_post(id: int, db: Session = Depends(get_db),
+                user_id: int = Depends(oauth2.get_current_user)):
     # return {"data": f"This is the post with id = {id}"}
 
     # cursor.execute("""
@@ -77,7 +83,8 @@ def get_post(id: int, db: Session = Depends(get_db)):
 
 
 @router.delete(path="/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int, db: Session = Depends(get_db)):
+def delete_post(id: int, db: Session = Depends(get_db),
+                user_id: int = Depends(oauth2.get_current_user)):
     # search_post = find_post_by_id(id)
     # cursor.execute("""
     # delete from posts where id = %s returning *
@@ -99,7 +106,8 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 
 @router.put(path="/{id}", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.Post)
-def update_post(id: int, upd_post: schemas.PostCreate, db: Session = Depends(get_db)):
+def update_post(id: int, upd_post: schemas.PostCreate, db: Session = Depends(get_db),
+                user_id: int = Depends(oauth2.get_current_user)):
     # search_post = find_post_by_id(id)
 
     # cursor.execute("""
