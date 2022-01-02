@@ -11,13 +11,17 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
 @router.get("/", response_model=List[schemas.Post])
-def get_posts(db: Session = Depends(get_db)):
+def get_posts(db: Session = Depends(get_db),
+              current_user: models.User = Depends(oauth2.get_current_user)):
     # cursor.execute("""
     # SELECT * from posts;
     # """)
     # posts_data = cursor.fetchall()
     # print(posts_data)
     # return {"data": my_posts}
+
+    print(f"current user: {current_user.email}")
+
     posts_data = db.query(models.Post).all()
     return posts_data   # {"data": posts_data}
 
@@ -25,9 +29,8 @@ def get_posts(db: Session = Depends(get_db)):
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(new_post: schemas.PostCreate,
                 db: Session = Depends(get_db),
-                user_id: int = Depends(oauth2.get_current_user)):
+                current_user: models.User = Depends(oauth2.get_current_user)):
 
-    print(f"User id: {user_id}")
 
     # print(f"payload = {new_post}")
     # print(f"payload as dict = {new_post.dict()}")
@@ -60,8 +63,9 @@ def create_post(new_post: schemas.PostCreate,
 
 # get post from an id
 @router.get("/{id}", response_model=schemas.Post)
-def get_post(id: int, db: Session = Depends(get_db),
-                user_id: int = Depends(oauth2.get_current_user)):
+def get_post(id: int,
+             db: Session = Depends(get_db),
+             current_user: models.User = Depends(oauth2.get_current_user)):
     # return {"data": f"This is the post with id = {id}"}
 
     # cursor.execute("""
@@ -84,7 +88,7 @@ def get_post(id: int, db: Session = Depends(get_db),
 
 @router.delete(path="/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int, db: Session = Depends(get_db),
-                user_id: int = Depends(oauth2.get_current_user)):
+                current_user: models.User = Depends(oauth2.get_current_user)):
     # search_post = find_post_by_id(id)
     # cursor.execute("""
     # delete from posts where id = %s returning *
@@ -107,7 +111,7 @@ def delete_post(id: int, db: Session = Depends(get_db),
 
 @router.put(path="/{id}", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.Post)
 def update_post(id: int, upd_post: schemas.PostCreate, db: Session = Depends(get_db),
-                user_id: int = Depends(oauth2.get_current_user)):
+                current_user: models.User = Depends(oauth2.get_current_user)):
     # search_post = find_post_by_id(id)
 
     # cursor.execute("""
