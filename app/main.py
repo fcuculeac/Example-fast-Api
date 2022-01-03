@@ -1,15 +1,9 @@
 # run in CMD:  uvicorn.exe app.main:app --reload
-
 from fastapi import FastAPI
-# from fastapi.params import Body
-# from random import randrange
-# import psycopg2
-# from psycopg2.extras import RealDictCursor
-# import time
-
 from . import models
 from .database import engine
 from .routers import posts, users, auth
+from .config import Settings
 
 models.Base.metadata.create_all(bind=engine)
 
