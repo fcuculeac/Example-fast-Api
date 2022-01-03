@@ -31,7 +31,6 @@ def create_post(new_post: schemas.PostCreate,
                 db: Session = Depends(get_db),
                 current_user: models.User = Depends(oauth2.get_current_user)):
 
-
     # print(f"payload = {new_post}")
     # print(f"payload as dict = {new_post.dict()}")
     # # return {"new_post": f"title={payload['title']}, content={payload['content']}"}
@@ -54,7 +53,7 @@ def create_post(new_post: schemas.PostCreate,
     #                        content=new_post.content,
     #                        published=new_post.published)
 
-    ins_data = models.Post(**new_post.dict())
+    ins_data = models.Post(owner_id=current_user.id, **new_post.dict())
     db.add(ins_data)
     db.commit()
     db.refresh(ins_data)
@@ -97,10 +96,15 @@ def delete_post(id: int, db: Session = Depends(get_db),
     # conn.commit()
 
     search_post = db.query(models.Post).filter(models.Post.id == id)
+    post = search_post.first()
 
-    if not search_post.first():
+    if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id {id} not found.")
+    elif post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f"Not authorized for this action. "
+                            + f"Post with id {id} has other owner_id {search_post.first().owner_id}.")
     else:
         # del my_posts[search_post[1]]
         # return {"data": search_post[0]}
@@ -125,6 +129,10 @@ def update_post(id: int, upd_post: schemas.PostCreate, db: Session = Depends(get
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"Post with id {id} not found.")
+    elif post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f"Not authorized for this action. "
+                            + f"Post with id {id} has other owner_id {post.owner_id}.")
     else:
         # original_post = search_post[0]
         # upd_post_as_dict = upd_post.dict()
