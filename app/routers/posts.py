@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
@@ -12,7 +12,8 @@ router = APIRouter(prefix="/posts", tags=["Posts"])
 
 @router.get("/", response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db),
-              current_user: models.User = Depends(oauth2.get_current_user)):
+              current_user: models.User = Depends(oauth2.get_current_user),
+              limit: int = 10, skip: int = 0, search: Optional[str] = ""):
     # cursor.execute("""
     # SELECT * from posts;
     # """)
@@ -22,7 +23,7 @@ def get_posts(db: Session = Depends(get_db),
 
     print(f"current user: {current_user.email}")
 
-    posts_data = db.query(models.Post).all()
+    posts_data = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     return posts_data   # {"data": posts_data}
 
 
