@@ -1,10 +1,12 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
-
+from pydantic.types import conint
 
 # define schema for the post
 # schema model - pydantic model - schema of the request & response
+
+
 class PostBase(BaseModel):
     title: str
     content: str
@@ -35,6 +37,14 @@ class Post(PostBase):
         orm_mode = True
 
 
+class PostOut(BaseModel):
+    Post: Post
+    votes: int
+
+    class Config:
+        orm_mode = True
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -52,3 +62,16 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[str] = None
+
+
+class Vote(BaseModel):
+    post_id: int
+    dir: conint(le=1)
+
+
+class VoteOut(BaseModel):
+    post_id: int
+    user_id: int
+
+    class Config:
+        orm_mode = True

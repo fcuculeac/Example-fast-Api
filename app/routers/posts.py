@@ -3,6 +3,7 @@ from typing import List, Optional
 from fastapi import Depends, HTTPException, APIRouter
 from sqlalchemy.orm import Session
 from starlette import status
+from sqlalchemy import func
 
 from app import schemas, models, oauth2
 from app.database import get_db
@@ -10,7 +11,8 @@ from app.database import get_db
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
-@router.get("/", response_model=List[schemas.Post])
+# @router.get("/", response_model=List[schemas.Post])
+@router.get("/", response_model=List[schemas.PostOut])
 def get_posts(db: Session = Depends(get_db),
               current_user: models.User = Depends(oauth2.get_current_user),
               limit: int = 10, skip: int = 0, search: Optional[str] = ""):
@@ -23,8 +25,15 @@ def get_posts(db: Session = Depends(get_db),
 
     print(f"current user: {current_user.email}")
 
-    posts_data = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
-    return posts_data   # {"data": posts_data}
+    # posts_data = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+
+    results = db.query(models.Post,
+                       func.count(models.Vote.post_id).label("votes")).join(
+        models.Vote, models.Vote.post_id == models.Post.id, isouter=True).group_by(
+        models.Post.id).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+    # print(results)
+
+    return results   # {"data": posts_data}
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
@@ -62,7 +71,7 @@ def create_post(new_post: schemas.PostCreate,
 
 
 # get post from an id
-@router.get("/{id}", response_model=schemas.Post)
+@router.get("/{id}", response_model=schemas.PostOut)
 def get_post(id: int,
              db: Session = Depends(get_db),
              current_user: models.User = Depends(oauth2.get_current_user)):
@@ -75,7 +84,10 @@ def get_post(id: int,
 
     # search_post = find_post_by_id(id)
 
-    search_post = db.query(models.Post).filter(models.Post.id == id).first()
+    # search_post = db.query(models.Post).filter(models.Post.id == id).first()
+    search_post = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(
+        models.Vote, models.Vote.post_id == models.Post.id, isouter=True).group_by(
+        models.Post.id).filter(models.Post.id == id).first()
     # print(search_post)
 
     if not search_post:
