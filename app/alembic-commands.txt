@@ -1,0 +1,34 @@
+alembic init <<folder name>> -- initializeaza alembic si creeaza si folder
+Ex: alembic init alembic
+
+edit file alembic/env.py, add Base object from database script
+change target_metadata = Base.metadata
+
+edit file alembic.ini
+
+
+# create a revision file, after, edit the file, function upgrade and downgrade
+alembic revision -m "create post table"
+
+# show the current version
+alembic current
+
+# upgrade to a revision number, the revision number is in the versions scripts
+alembic upgrade 413756eeb9d9
+
+
+# downgrade one revision
+alembic downgrade -1
+
+# downgrade two revision
+alembic downgrade -2
+
+# view history scripts
+alembic history
+
+# upgrade to top
+alembic upgrade head
+
+# genereaza automat schema conform cu models.py
+
+alembic revision --autogenerate -m "auto generate votes"
